@@ -1,0 +1,6 @@
+[submodule "our_viterbi_lib"]
+	path = williamyang_viterbi_lib
+	url = https://github.com/williamyang98/ViterbiDecoderCpp.git
+[submodule "kafq_libfec"]
+	path = ka9q_libfec
+	url = https://github.com/ka9q/libfec.git
