@@ -4,9 +4,16 @@
 #include "./parity.h"
 
 typedef union { unsigned char c[256]; __m128i v[16];} metric_t;
-typedef union { unsigned long w[8]; unsigned char c[32];} decision_t;
+typedef union { 
+    unsigned long w[8]; 
+    unsigned char c[32];
+    unsigned short s[16];
+} decision_t;
 
-union branchtab29 { unsigned char c[128]; } Branchtab29_sse2[2];
+union branchtab29 { 
+    unsigned char c[128]; 
+    __m128i v[8];
+} Branchtab29_sse2[2];
 
 static int Init = 0;
 
@@ -95,4 +102,63 @@ void delete_viterbi29_sse2(struct v29 *p){
     free(vp->decisions);
     free(vp);
   }
+}
+
+/* This code is turned off because it's slower than my hand-crafted assembler in sse2bfly27.s. But it does work. */
+void update_viterbi29_blk_sse2(struct v29 *p, unsigned char *syms, int nbits) {
+  struct v29 *vp = p;
+  decision_t *d = (decision_t *)vp->dp;
+
+  while(nbits--){
+    __m128i sym0v,sym1v;
+    metric_t *tmp;
+    int i;
+    
+    /* Splat the 0th symbol across sym0v, the 1st symbol across sym1v, etc */
+    sym0v = _mm_set1_epi8(syms[0]);
+    sym1v = _mm_set1_epi8(syms[1]);
+    syms += 2;
+
+    for(i=0;i<8;i++){
+      __m128i decision0,decision1,metric,m_metric,m0,m1,m2,m3,survivor0,survivor1;
+
+      /* Form branch metrics */
+      metric = _mm_avg_epu8(
+        _mm_xor_si128(Branchtab29_sse2[0].v[i],sym0v),
+        _mm_xor_si128(Branchtab29_sse2[1].v[i],sym1v)
+      );
+      /* There's no packed bytes right shift in SSE2, so we use the word version and mask
+       * (I'm *really* starting to like Altivec...)
+       */
+      metric = _mm_srli_epi16(metric,3);
+      metric = _mm_and_si128(metric,_mm_set1_epi8(31));
+      m_metric = _mm_sub_epi8(_mm_set1_epi8(31),metric);
+    
+      /* Add branch metrics to path metrics */
+      m0 = _mm_add_epi8(vp->old_metrics->v[i],metric);
+      m3 = _mm_add_epi8(vp->old_metrics->v[8+i],metric);
+      m1 = _mm_add_epi8(vp->old_metrics->v[8+i],m_metric);
+      m2 = _mm_add_epi8(vp->old_metrics->v[i],m_metric);
+    
+      /* Compare and select, using modulo arithmetic */
+      decision0 = _mm_cmpgt_epi8(_mm_sub_epi8(m0,m1),_mm_setzero_si128());
+      decision1 = _mm_cmpgt_epi8(_mm_sub_epi8(m2,m3),_mm_setzero_si128());
+      survivor0 = _mm_or_si128(_mm_and_si128(decision0,m1),_mm_andnot_si128(decision0,m0));
+      survivor1 = _mm_or_si128(_mm_and_si128(decision1,m3),_mm_andnot_si128(decision1,m2));
+ 
+      /* Pack each set of decisions into 16 bits */
+      d->s[2*i] = _mm_movemask_epi8(_mm_unpacklo_epi8(decision0,decision1));
+      d->s[2*i+1] = _mm_movemask_epi8(_mm_unpackhi_epi8(decision0,decision1));
+
+      /* Store surviving metrics */
+      vp->new_metrics->v[2*i] = _mm_unpacklo_epi8(survivor0,survivor1);
+      vp->new_metrics->v[2*i+1] = _mm_unpackhi_epi8(survivor0,survivor1);
+    }
+    d++;
+    /* Swap pointers to old and new metrics */
+    tmp = vp->old_metrics;
+    vp->old_metrics = vp->new_metrics;
+    vp->new_metrics = tmp;
+  }
+  vp->dp = d;
 }

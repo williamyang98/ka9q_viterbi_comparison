@@ -16,7 +16,7 @@
 #include "viterbi/x86/viterbi_decoder_avx_u8.h"
 #include "viterbi/x86/viterbi_decoder_avx_u16.h"
 
-#define CONFIG 0
+#define CONFIG 3
 
 #if CONFIG == 0
 #include "viterbi27_sse2.h"
@@ -68,8 +68,8 @@ auto kafq_init = init_viterbi29_sse2;
 auto kafq_update = update_viterbi29_blk_sse2;
 auto kafq_chainback = chainback_viterbi29_sse2;
 auto kafq_delete = delete_viterbi29_sse2;
-constexpr size_t TOTAL_DECODE_BYTES = 1024;
-constexpr size_t TOTAL_RESULTS = 4096*4;
+constexpr size_t TOTAL_DECODE_BYTES = 512;
+constexpr size_t TOTAL_RESULTS = 4096;
 #endif
 
 struct SI_Notation {
