@@ -71,3 +71,17 @@ static size_t get_total_bit_errors(const uint8_t* x0, const uint8_t* x1, const s
     }
     return total_errors;
 }
+
+struct SI_Notation {
+    double value; 
+    const char* prefix;
+};
+
+static SI_Notation get_si_notation(double x) {
+    if (x > 1e12) return SI_Notation { x*1e-12, "T" };
+    if (x > 1e9) return SI_Notation { x*1e-9, "G" };
+    if (x > 1e6) return SI_Notation { x*1e-6, "M" };
+    if (x > 1e3) return SI_Notation { x*1e-3, "k" };
+    return SI_Notation { x, "" };
+}
+

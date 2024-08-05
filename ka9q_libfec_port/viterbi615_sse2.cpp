@@ -101,7 +101,7 @@ void delete_viterbi615_sse2(struct v615 *p){
 }
 
 
-int update_viterbi615_blk_sse2(struct v615 *p,unsigned char *syms,int nbits){
+void update_viterbi615_blk_sse2(struct v615 *p,unsigned char *syms,int nbits){
   struct v615 *vp = p;
   decision_t *d = (decision_t *)vp->dp;
   int path_metric = 0;
@@ -188,7 +188,6 @@ int update_viterbi615_blk_sse2(struct v615 *p,unsigned char *syms,int nbits){
     vp->new_metrics = tmp;
   }
   vp->dp = d;
-  return path_metric;
 }
 
 
