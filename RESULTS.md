@@ -5,6 +5,7 @@
 | K   | R   | ka9q | sse-u8 | avx-u8 | sse-u16 | avx-u16 |
 | --- | --- | --- | --- | --- | --- | --- |
 | 7 | 2 | 448M | 544M | 474M | 313M | 388M |
+| 9 | 2 | 146M | 147M | 242M | 71.0M | 128M |
 | 15 | 6 | 3.05M | 3.24M | 5.55M | 2.15M | 3.81M |
 | 24 | 2 | 1.00k | 2.35k | 2.65k | 1.04k | 1.07k |
 
@@ -12,6 +13,7 @@
 | K   | R   | ka9q | sse-u8 | avx-u8 | sse-u16 | avx-u16 |
 | --- | --- | --- | --- | --- | --- | --- |
 | 7 | 2 | 490M | 799M | 802M | 801M | 784M |
+| 9 | 2 | 431M | 364M | 376M | 356M | 357M |
 | 15 | 6 | 77.1M | 76.3M | 81.6M | 72.5M | 80.9M |
 | 24 | 2 | 3.44M | 3.33M | 2.71M | 3.55M | 3.46M |
 
@@ -33,3 +35,10 @@
 | 7 | 9 | 173M | 207M | 209M | 201M | 201M |
 | 15 | 6 | 25.2M | 39.3M | 41.8M | 34.7M | 40.6M |
 | 24 | 2 | 6.62M | 6.50M | 6.52M | 6.86M | 6.68M |
+
+# Caveats
+Our viterbi decoder implementation differs to ka9q's in several ways.
+- Renomalisation threshold is checked against every branch instead of the first. This means that we renormalise the errors more often which leads to lower performance at the cost of higher error correcting ability.
+- Due to the more aggressive renormalisation the magnitude of our soft decision symbols matters alot. A higher symbol magnitude means the error metric accumulates more quickly, leading to more frequent renormalisation and lower performance. This is why the "hard8" config performs better than "soft8" config for our decoders.
+- Overall structure of the butterfly algorithm are the same, however we use saturating arithmetic over modular arithmetic. This means we avoid error metric overflows however we suffer from lower performance due to higher CPI.
+- Chainback algorithm is the same but ours is more suspectible to the whims of the compiler and its optimisations since the decision bits type varies. It is sometimes much faster than ka9q due to vectorisation, and sometimes alot slower. It is unclear what specifically causes the performance differences.
