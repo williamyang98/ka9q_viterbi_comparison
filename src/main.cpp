@@ -113,7 +113,9 @@ TestResults run_test(const size_t total_decode_bytes, const size_t total_samples
             }
         }
         results.ka9q = get_results_average(samples.data(), samples.size());
-        printf("o kafq decoder\n");
+        const size_t total_bit_errors = get_total_bit_errors(x_in.data(), x_out.data(), x_in.size());
+        const double bit_error_rate = double(total_bit_errors) / double(x_in.size()*8);
+        printf("o kafq decoder (%.3f)\n", bit_error_rate);
     }
     // test ours
     {
@@ -152,7 +154,9 @@ TestResults run_test(const size_t total_decode_bytes, const size_t total_samples
             }
         }
         results.sse_u8 = get_results_average(samples.data(), samples.size());
-        printf("o sse_u8\n");
+        const size_t total_bit_errors = get_total_bit_errors(x_in.data(), x_out.data(), x_in.size());
+        const double bit_error_rate = double(total_bit_errors) / double(x_in.size()*8);
+        printf("o sse_u8 (%.3f)\n", bit_error_rate);
     }
     {
         printf("- avx_u8\r");
@@ -190,7 +194,9 @@ TestResults run_test(const size_t total_decode_bytes, const size_t total_samples
             }
         }
         results.avx_u8 = get_results_average(samples.data(), samples.size());
-        printf("o avx_u8\n");
+        const size_t total_bit_errors = get_total_bit_errors(x_in.data(), x_out.data(), x_in.size());
+        const double bit_error_rate = double(total_bit_errors) / double(x_in.size()*8);
+        printf("o avx_u8 (%.3f)\n", bit_error_rate);
     }
     {
         printf("- sse_u16\r");
@@ -228,7 +234,9 @@ TestResults run_test(const size_t total_decode_bytes, const size_t total_samples
             }
         }
         results.sse_u16 = get_results_average(samples.data(), samples.size());
-        printf("o sse_u16\n");
+        const size_t total_bit_errors = get_total_bit_errors(x_in.data(), x_out.data(), x_in.size());
+        const double bit_error_rate = double(total_bit_errors) / double(x_in.size()*8);
+        printf("o sse_u16 (%.3f)\n", bit_error_rate);
     }
     {
         printf("- avx_u16\r");
@@ -266,7 +274,9 @@ TestResults run_test(const size_t total_decode_bytes, const size_t total_samples
             }
         }
         results.avx_u16 = get_results_average(samples.data(), samples.size());
-        printf("o avx_u16\n");
+        const size_t total_bit_errors = get_total_bit_errors(x_in.data(), x_out.data(), x_in.size());
+        const double bit_error_rate = double(total_bit_errors) / double(x_in.size()*8);
+        printf("o avx_u16 (%.3f)\n", bit_error_rate);
     }
     printf("\n");
     return results;
