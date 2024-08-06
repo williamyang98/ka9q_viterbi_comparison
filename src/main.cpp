@@ -31,6 +31,7 @@
 static const int V27_POLY[2] = { 0x6d, 0x4f };
 static const int V29_POLY[2] = { 0x1af, 0x11d };
 static const int V47_POLY[4] = { 121, 117, 91, 111 };
+static const int V49_POLY[4] = { 501, 441, 331, 315 };
 static const int V615_POLY[6] = { 042631, 047245, 056507, 073363, 077267, 064537 };
 static const int V224_POLY[2] = { 062650457, 062650455 };
 
@@ -347,6 +348,20 @@ int main(int argc, char** argv) {
         auto results = test_results_t();
         results.push_back(test_ka9q<K,R,ka9q_viterbi29>(test));
         results.push_back(test_spiral<K,R,spiral29_i>(test));
+        test_ours<K,R>(test, results);
+        tests.push_back(test);
+        test_results.push_back(results);
+        printf("\n");
+    }
+    if (1) {
+        constexpr size_t K = 9;
+        constexpr size_t R = 4;
+        constexpr size_t total_input_bytes = 512;
+        constexpr size_t total_samples = 4096;
+        auto test = init_test<K,R>(V49_POLY, total_input_bytes, total_samples);
+        auto results = test_results_t();
+        results.push_back(std::nullopt);
+        results.push_back(test_spiral<K,R,spiral49_i>(test));
         test_ours<K,R>(test, results);
         tests.push_back(test);
         test_results.push_back(results);

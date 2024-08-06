@@ -19,6 +19,7 @@ add_library(spiral STATIC
     ${SPIRAL_DIR}/spiral27.cpp 
     ${SPIRAL_DIR}/spiral29.cpp 
     ${SPIRAL_DIR}/spiral47.cpp 
+    ${SPIRAL_DIR}/spiral49.cpp 
     ${SPIRAL_DIR}/spiral615.cpp 
 )
 target_compile_features(spiral PRIVATE cxx_std_17)

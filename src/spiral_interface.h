@@ -6,6 +6,7 @@
 #include "spiral27.h"
 #include "spiral29.h"
 #include "spiral47.h"
+#include "spiral49.h"
 #include "spiral615.h"
 
 // Match the interface for ka9q decoders to be like ours for testing
@@ -56,6 +57,7 @@ public:
 };
 
 using spiral27_i = spiral_viterbi_interface<7,2,spiral27,create_spiral27,init_spiral27,update_spiral27,chainback_spiral27, delete_spiral27>;
-using spiral47_i = spiral_viterbi_interface<7,4,spiral47,create_spiral47,init_spiral47,update_spiral47,chainback_spiral47, delete_spiral47>;
 using spiral29_i = spiral_viterbi_interface<9,2,spiral29,create_spiral29,init_spiral29,update_spiral29,chainback_spiral29, delete_spiral29>;
+using spiral47_i = spiral_viterbi_interface<7,4,spiral47,create_spiral47,init_spiral47,update_spiral47,chainback_spiral47, delete_spiral47>;
+using spiral49_i = spiral_viterbi_interface<9,4,spiral49,create_spiral49,init_spiral49,update_spiral49,chainback_spiral49, delete_spiral49>;
 using spiral615_i = spiral_viterbi_interface<15,6,spiral615,create_spiral615,init_spiral615,update_spiral615,chainback_spiral615, delete_spiral615>;
