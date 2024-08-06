@@ -1,7 +1,6 @@
 # Caveats
 Our viterbi decoder implementation differs to ka9q's in several ways.
-- Renomalisation threshold is checked against every branch instead of the first. This means that we renormalise the errors more often which leads to lower performance at the cost of higher error correcting ability.
-- Due to the more aggressive renormalisation the magnitude of our soft decision symbols matters alot. A higher symbol magnitude means the error metric accumulates more quickly, leading to more frequent renormalisation and lower performance. This is why the "hard8" config performs better than "soft8" config for our decoders.
+- Due to error metrics renormalisation the magnitude of our soft decision symbols matters alot. A higher symbol magnitude means the error metric accumulates more quickly, leading to more frequent renormalisation and lower performance. This is why the "hard8" config performs better than "soft8" config for our decoders.
 - Overall structure of the butterfly algorithm are the same, however we use saturating arithmetic over modular arithmetic. This means we avoid error metric overflows however we suffer from lower performance due to higher CPI.
 - Chainback algorithm is the same but ours is more suspectible to the whims of the compiler and its optimisations since the decision bits type varies. It is sometimes much faster than ka9q due to vectorisation, and sometimes alot slower. It is unclear what specifically causes the performance differences.
 - Chainback performance isn't written explicitly with intrinsics so whether or not it undergoes auto-vectorisation will depend on the compiler.
