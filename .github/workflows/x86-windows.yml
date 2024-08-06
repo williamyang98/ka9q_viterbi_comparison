@@ -1,0 +1,37 @@
+name: x86-windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main", "dev" ]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+
+    - name: Configure CMake
+      run: cmake . -B build --preset windows-clang -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      run: cmake --build build --config ${{env.BUILD_TYPE}}
+
+    - name: Run benchmark
+      run: ./build/main.exe
+
+    - name: Upload files
+      uses: actions/upload-artifact@v3
+      with:
+        name: run_benchmark_windows_x64
+        path: ${{github.workspace}}/build/main.exe

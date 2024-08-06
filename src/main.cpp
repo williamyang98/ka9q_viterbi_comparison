@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <vector>
 #include <memory>
 #include "./util.h"
@@ -84,6 +85,7 @@ TestResults run_test(const size_t total_decode_bytes, const size_t total_samples
     // test kafq
     {
         printf("- kafq decoder\r");
+        fflush(stdout);
         auto decoder = ka9q_t(total_transmit_bits);
         auto config = get_ka9q_offset_binary_config();
         auto y_out = std::vector<uint8_t>(total_symbols);
@@ -120,6 +122,7 @@ TestResults run_test(const size_t total_decode_bytes, const size_t total_samples
     // test ours
     {
         printf("- sse_u8\r");
+        fflush(stdout);
         using soft_t = int8_t;
         using error_t = uint8_t;
         using decoder = ViterbiDecoder_SSE_u8<K,R>;
@@ -160,6 +163,7 @@ TestResults run_test(const size_t total_decode_bytes, const size_t total_samples
     }
     {
         printf("- avx_u8\r");
+        fflush(stdout);
         using soft_t = int8_t;
         using error_t = uint8_t;
         using decoder = ViterbiDecoder_AVX_u8<K,R>;
@@ -200,6 +204,7 @@ TestResults run_test(const size_t total_decode_bytes, const size_t total_samples
     }
     {
         printf("- sse_u16\r");
+        fflush(stdout);
         using soft_t = int16_t;
         using error_t = uint16_t;
         using decoder = ViterbiDecoder_SSE_u16<K,R>;
@@ -240,6 +245,7 @@ TestResults run_test(const size_t total_decode_bytes, const size_t total_samples
     }
     {
         printf("- avx_u16\r");
+        fflush(stdout);
         using soft_t = int16_t;
         using error_t = uint16_t;
         using decoder = ViterbiDecoder_AVX_u16<K,R>;
