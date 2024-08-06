@@ -32,7 +32,7 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
-        "CMAKE_CXX_FLAGS_INIT": "-ffast-math -march=native -Wlarger-than=100000",
+        "CMAKE_CXX_FLAGS_INIT": "-ffast-math -march=native",
         "CMAKE_C_FLAGS_INIT": "-ffast-math -march=native"
       }
     },

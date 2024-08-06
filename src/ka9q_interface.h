@@ -27,7 +27,7 @@ public:
 private:
     vRK* m_inner;
 public:
-    ka9q_viterbi_interface(size_t transmit_bits): m_inner(vRK_create(transmit_bits)) {}
+    ka9q_viterbi_interface(size_t transmit_bits): m_inner(vRK_create(int(transmit_bits))) {}
     ka9q_viterbi_interface(ka9q_viterbi_interface& other) {
         m_inner = other.m_inner;
         other.m_inner = nullptr;
@@ -50,10 +50,10 @@ public:
     void update(uint8_t* sym, size_t total_syms) {
         assert(total_syms % _R == 0);
         const size_t total_bits = total_syms / _R;
-        vRK_update(m_inner, sym, total_bits);
+        vRK_update(m_inner, sym, int(total_bits));
     }
     void chainback(uint8_t* data, size_t total_bits) {
-        vRK_chainback(m_inner, data, total_bits, 0);
+        vRK_chainback(m_inner, data, uint32_t(total_bits), 0);
     }
 };
 
