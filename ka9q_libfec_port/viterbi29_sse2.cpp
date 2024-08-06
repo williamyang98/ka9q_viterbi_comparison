@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <immintrin.h>
 #include "./viterbi29_sse2.h"
-#include "./parity.h"
+#include "../src/parity.h"
 
 typedef union { unsigned char c[256]; __m128i v[16];} metric_t;
 typedef union { 
@@ -44,7 +44,7 @@ int init_viterbi29_sse2(struct v29 *p,int starting_state){
 }
 
 /* Create a new instance of a Viterbi decoder */
-struct v29 *create_viterbi29_sse2(int len){
+struct v29 *create_viterbi29_sse2(const int *poly, int len){
   struct v29 *vp;
   int state;
 
@@ -53,7 +53,7 @@ struct v29 *create_viterbi29_sse2(int len){
     /* Initialize branch tables */
     for(state=0;state < 128;state++){
       for(int i = 0; i < 2; i++) {
-        Branchtab29_sse2[i].c[state] = parity.parse((2*state) & V29_POLY[i]) ? 255:0;
+        Branchtab29_sse2[i].c[state] = parity.parse((2*state) & poly[i]) ? 255:0;
       }
     }
     Init++;
@@ -130,9 +130,9 @@ void update_viterbi29_blk_sse2(struct v29 *p, unsigned char *syms, int nbits) {
       /* There's no packed bytes right shift in SSE2, so we use the word version and mask
        * (I'm *really* starting to like Altivec...)
        */
-      metric = _mm_srli_epi16(metric,3);
-      metric = _mm_and_si128(metric,_mm_set1_epi8(31));
-      m_metric = _mm_sub_epi8(_mm_set1_epi8(31),metric);
+      metric = _mm_srli_epi16(metric,4);
+      metric = _mm_and_si128(metric,_mm_set1_epi8(0b1111));
+      m_metric = _mm_sub_epi8(_mm_set1_epi8(0b1111),metric);
     
       /* Add branch metrics to path metrics */
       m0 = _mm_add_epi8(vp->old_metrics->v[i],metric);

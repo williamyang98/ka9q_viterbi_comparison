@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <limits.h>
-#include "./parity.h"
+#include "../src/parity.h"
 #include "./viterbi615_sse2.h"
 
 typedef union { unsigned long w[512]; unsigned short s[1024];} decision_t;
@@ -41,7 +41,7 @@ int init_viterbi615_sse2(struct v615 *p,int starting_state){
 }
 
 /* Create a new instance of a Viterbi decoder */
-struct v615 *create_viterbi615_sse2(int len){
+struct v615 *create_viterbi615_sse2(const int *poly, int len){
   struct v615 *vp;
   int state;
 
@@ -50,7 +50,7 @@ struct v615 *create_viterbi615_sse2(int len){
     /* Initialize branch tables */
     for(state=0;state < 8192;state++){
       for(int i = 0; i < 6; i++) {
-        Branchtab615[i].s[state] = parity.parse((2*state) & V615_POLY[i]) ? 255:0;
+        Branchtab615[i].s[state] = parity.parse((2*state) & poly[i]) ? 255:0;
       }
     }
     Init++;

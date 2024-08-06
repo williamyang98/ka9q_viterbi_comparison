@@ -4,6 +4,7 @@
 
 Benchmark comparisons between Viterbi decoders
 - [ka9q](https://github.com/ka9q/libfec)
+- [spiral](https://www.spiral.net/software/viterbi.html)
 - [williamyang98](https://github.com/williamyang98/ViterbiDecoderCpp)
 
 # Build instructions

@@ -14,9 +14,8 @@ struct Decoder_Config {
 // This is becauses it uses XOR to perform conditional negation
 static Decoder_Config<uint8_t, uint8_t> get_ka9q_offset_binary_config() {
     // ViterbiDecoder_Config<uint8_t> config; // we dont care about these parameters for ka9q
-    const uint8_t MARGIN = 30; // signed types dont use saturating arithmetic so we need this
-    const uint8_t SOFT_DECISION_HIGH = 255 - MARGIN;
-    const uint8_t SOFT_DECISION_LOW = 0 + MARGIN;
+    const uint8_t SOFT_DECISION_HIGH = 255;
+    const uint8_t SOFT_DECISION_LOW = 0;
     return { SOFT_DECISION_HIGH, SOFT_DECISION_LOW, {} };
 }
 

@@ -73,15 +73,21 @@ static size_t get_total_bit_errors(const uint8_t* x0, const uint8_t* x1, const s
 }
 
 struct SI_Notation {
-    double value; 
+    double scale; 
     const char* prefix;
 };
 
 static SI_Notation get_si_notation(double x) {
-    if (x > 1e12) return SI_Notation { x*1e-12, "T" };
-    if (x > 1e9) return SI_Notation { x*1e-9, "G" };
-    if (x > 1e6) return SI_Notation { x*1e-6, "M" };
-    if (x > 1e3) return SI_Notation { x*1e-3, "k" };
-    return SI_Notation { x, "" };
+    static const SI_Notation notations[] = {
+        { 1e15, "P" },
+        { 1e12, "T" },
+        { 1e9, "G" },
+        { 1e6, "M" },
+        { 1e3, "k" },
+    };
+    for (const auto& notation: notations) {
+        if (x > notation.scale) return notation;
+    }
+    return { 1, "" };
 }
 

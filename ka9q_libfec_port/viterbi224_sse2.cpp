@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include "./viterbi224_sse2.h"
-#include "./parity.h"
+#include "../src/parity.h"
 
 constexpr size_t K = 24;
 constexpr size_t R = 2;
@@ -47,7 +47,7 @@ int init_viterbi224_sse2(struct v224 *p,int starting_state){
 }
 
 // Create a new instance of a Viterbi decoder
-struct v224 *create_viterbi224_sse2(int len){
+struct v224 *create_viterbi224_sse2(const int *poly, int len){
   struct v224 *p;
   struct v224 *vp;
   int state;
@@ -68,7 +68,7 @@ struct v224 *create_viterbi224_sse2(int len){
   const auto& parity = ParityTable::get();
   for(state=0;state < (1<<(K-2));state++){
     for (int i = 0; i < 2; i++) { 
-        Branchtab224[i].s[state] = parity.parse((2*state) & V224_POLY[i]) ? 255 : 0;
+        Branchtab224[i].s[state] = parity.parse((2*state) & poly[i]) ? 255 : 0;
     }
   }
   init_viterbi224_sse2(vp,0);
