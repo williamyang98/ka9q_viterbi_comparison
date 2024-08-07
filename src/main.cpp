@@ -26,6 +26,9 @@
 
 static FILE* const fp_log = stderr;
 static FILE* fp_out = stdout;
+static struct {
+    bool has_previous_object = false;
+} json_writer;
 
 struct TestSample {
     uint64_t init_ns = 0;
@@ -75,6 +78,10 @@ void print_array(tcb::span<const T> data, const std::function<U(const T&)> trans
 }
 
 TestResult print_test(const char* name, const Test& test) {
+    if (json_writer.has_previous_object) {
+        fprintf(fp_out, ",\n");
+    }
+    json_writer.has_previous_object = true;
     fprintf(fp_out, "{\n");
     fprintf(fp_out, "  \"name\": \"%s\",\n", name);
     fprintf(fp_out, "  \"K\": %zu,\n", test.K);
@@ -105,8 +112,8 @@ TestResult print_test(const char* name, const Test& test) {
     const float bit_error_rate = float(total_bit_errors) / float(total_bits);
     fprintf(fp_out, "  \"total_bits\": %zu,\n", total_bits);
     fprintf(fp_out, "  \"total_bit_errors\": %zu,\n", total_bit_errors);
-    fprintf(fp_out, "  \"bit_error_rate\": %f,\n", bit_error_rate);
-    fprintf(fp_out, "},\n");
+    fprintf(fp_out, "  \"bit_error_rate\": %f\n", bit_error_rate);
+    fprintf(fp_out, "}");
     return { bit_error_rate };
 }
 
@@ -362,7 +369,6 @@ int main(int argc, char** argv) {
         test_ka9q<K,R,ka9q_viterbi27>(test);
         test_spiral<K,R,spiral27_i>(test);
         test_ours<K,R>(test);
-        fprintf(fp_log, "\n");
     }
     if (1) {
         constexpr size_t K = 7;
@@ -372,7 +378,6 @@ int main(int argc, char** argv) {
         auto test = init_test<K,R>(poly, total_input_bytes, args.sampling_time, args.minimum_samples);
         test_spiral<K,R,spiral47_i>(test);
         test_ours<K,R>(test);
-        fprintf(fp_log, "\n");
     }
     if (1) {
         constexpr size_t K = 9;
@@ -383,7 +388,6 @@ int main(int argc, char** argv) {
         test_ka9q<K,R,ka9q_viterbi29>(test);
         test_spiral<K,R,spiral29_i>(test);
         test_ours<K,R>(test);
-        fprintf(fp_log, "\n");
     }
     if (1) {
         constexpr size_t K = 9;
@@ -393,7 +397,6 @@ int main(int argc, char** argv) {
         auto test = init_test<K,R>(poly, total_input_bytes, args.sampling_time, args.minimum_samples);
         test_spiral<K,R,spiral49_i>(test);
         test_ours<K,R>(test);
-        fprintf(fp_log, "\n");
     }
     if (1) {
         constexpr size_t K = 15;
@@ -404,7 +407,6 @@ int main(int argc, char** argv) {
         test_ka9q<K,R,ka9q_viterbi615>(test);
         test_spiral<K,R,spiral615_i>(test);
         test_ours<K,R>(test);
-        fprintf(fp_log, "\n");
     }
     if (1) {
         constexpr size_t K = 24;
@@ -414,8 +416,7 @@ int main(int argc, char** argv) {
         auto test = init_test<K,R>(poly, total_input_bytes, args.sampling_time, args.minimum_samples);
         test_ka9q<K,R,ka9q_viterbi224>(test);
         test_ours<K,R>(test);
-        fprintf(fp_log, "\n");
     }
-    fprintf(fp_out, "]\n");
+    fprintf(fp_out, "\n]\n");
     return 0;
 }
