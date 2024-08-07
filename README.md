@@ -14,7 +14,8 @@ Benchmark comparisons between Viterbi decoders
 # Build instructions
 1. Configure cmake: ```cmake . -B build --preset windows-msvc -DCMAKE_BUILD_TYPE=Release```.
 2. Compile program: ```cmake --build build```.
-3. Run program: ```./build/main.exe```.
+3. Create folder to store benchmarks: ```mkdir data```.
+4. Run program: ```./build/main.exe```.
 
 # Plot instructions
 1. Setup python virtual environment: ```python -m venv venv```.
