@@ -10,7 +10,7 @@ def main():
         description="Tabulate benchmark data",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
-    parser.add_argument("filename", help="Filename for benchmark data")
+    parser.add_argument("filename", nargs="?", default="./data/benchmark.json", help="Filename for benchmark data")
     args = parser.parse_args()
 
     with open(args.filename, "r") as fp:
