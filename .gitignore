@@ -3,3 +3,6 @@
 /build_*/
 /data/
 .cache/
+/venv/
+/.venv/
+/.env/
