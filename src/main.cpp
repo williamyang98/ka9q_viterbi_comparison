@@ -9,6 +9,7 @@
 #include <optional>
 #include <vector>
 #include "./argparse.hpp"
+#include "./tableless_avx_u8.h"
 #include "./ka9q_interface.h"
 #include "./span.h"
 #include "./spiral_interface.h"
@@ -161,7 +162,7 @@ TestResult test_ours_single(const char* name, Test& test, Decoder_Config<soft_t,
         config.soft_decision_high, config.soft_decision_low
     );
     auto branch_table = std::make_unique<ViterbiBranchTable<K,R,soft_t>>(poly, config.soft_decision_high, config.soft_decision_low);
-    auto core = std::make_unique<ViterbiDecoder_Core<K,R,error_t,soft_t>>(*branch_table, config.decoder_config);
+    auto core = std::make_unique<ViterbiDecoder_Core<K,R,error_t,soft_t>>(config.decoder_config);
     core->set_traceback_length(total_decode_bits);
     Timer total_time;
     samples.clear();
@@ -179,7 +180,7 @@ TestResult test_ours_single(const char* name, Test& test, Decoder_Config<soft_t,
         }
         {
             Timer t;
-            decoder_t::template update<uint64_t>(*core, y_out.data(), y_out.size());
+            decoder_t::template update<uint64_t>(*core, y_out.data(), y_out.size(), *branch_table);
             sample.update_symbols_ns = t.get_delta();
         }
         {
@@ -297,6 +298,67 @@ void test_spiral(Test& test) {
     fprintf(fp_log, "o spiral (%.3f)\n", result.bit_error_rate);
 }
 
+// test ours tableless
+template <size_t K, size_t R>
+TestResult test_ours_tableless(Test& test) {
+    using soft_t = int8_t;
+    using error_t = uint8_t;
+    const size_t total_decode_bits = test.total_input_bytes*8;
+    const int* poly = test.poly;
+    const auto& x_in = test.x_in;
+    auto& x_out = test.x_out;
+    using reg_t = uint32_t;
+    using decoder_t = ViterbiDecoder_Tableless_AVX_u8<K,R>;
+    using decoder_config_t = ViterbiDecoder_Tableless_Config_AVX_u8;
+    auto config = get_soft8_decoding_config(R);
+    decoder_config_t decoder_config;
+    {
+        decoder_config.poly = reinterpret_cast<const uint32_t*>(test.poly);
+        decoder_config.soft_decision_low = config.soft_decision_low;
+        decoder_config.soft_decision_high = config.soft_decision_high;
+    }
+    auto encoder = ConvolutionalEncoder_ShiftRegister<reg_t>(K, R, poly);
+    auto y_out = std::vector<soft_t>(test.total_output_symbols);
+    encode_data<soft_t>(
+        &encoder,
+        x_in.data(), x_in.size(), y_out.data(), y_out.size(),
+        config.soft_decision_high, config.soft_decision_low
+    );
+    auto core = std::make_unique<ViterbiDecoder_Core<K,R,error_t,soft_t>>(config.decoder_config);
+    core->set_traceback_length(total_decode_bits);
+    fprintf(fp_log, "- avx_u8_tableless\r");
+    fflush(fp_log);
+    Timer total_time;
+    samples.clear();
+    for (size_t i = 0; ; i++) {
+        const float elapsed_seconds = float(total_time.get_delta<std::chrono::milliseconds>())*1e-3f;
+        if ((elapsed_seconds > test.sampling_time) && (i > test.minimum_samples)) break;
+        TestSample sample;
+        {
+            for (auto& x: x_out) x = 0x00;
+        }
+        {
+            Timer t;
+            core->reset();
+            sample.init_ns = t.get_delta();
+        }
+        {
+            Timer t;
+            decoder_t::template update<uint64_t>(*core, y_out.data(), y_out.size(), decoder_config);
+            sample.update_symbols_ns = t.get_delta();
+        }
+        {
+            Timer t;
+            core->chainback(x_out.data(), total_decode_bits);
+            sample.chainback_bits_ns = t.get_delta();
+        }
+        samples.push_back(sample);
+    }
+    auto result = print_test("avx_u8_tableless", test);
+    fprintf(fp_log, "o avx_u8_tableless (%.3f)\n", result.bit_error_rate);
+    return result;
+}
+
 void init_parser(argparse::ArgumentParser& parser) {
     parser.add_argument("-t", "--sampling-time")
         .default_value(float(1.0f)).scan<'g', float>()
@@ -360,7 +422,7 @@ int main(int argc, char** argv) {
     samples.clear();
 
     fprintf(fp_out, "[\n");
-    if (1) {
+    if (0) {
         constexpr size_t K = 7;
         constexpr size_t R = 2;
         constexpr size_t total_input_bytes = 1024;
@@ -370,7 +432,7 @@ int main(int argc, char** argv) {
         test_spiral<K,R,spiral27_i>(test);
         test_ours<K,R>(test);
     }
-    if (1) {
+    if (0) {
         constexpr size_t K = 7;
         constexpr size_t R = 4;
         constexpr size_t total_input_bytes = 1024;
@@ -379,7 +441,7 @@ int main(int argc, char** argv) {
         test_spiral<K,R,spiral47_i>(test);
         test_ours<K,R>(test);
     }
-    if (1) {
+    if (0) {
         constexpr size_t K = 9;
         constexpr size_t R = 2;
         constexpr size_t total_input_bytes = 512;
@@ -389,7 +451,7 @@ int main(int argc, char** argv) {
         test_spiral<K,R,spiral29_i>(test);
         test_ours<K,R>(test);
     }
-    if (1) {
+    if (0) {
         constexpr size_t K = 9;
         constexpr size_t R = 4;
         constexpr size_t total_input_bytes = 512;
@@ -398,7 +460,7 @@ int main(int argc, char** argv) {
         test_spiral<K,R,spiral49_i>(test);
         test_ours<K,R>(test);
     }
-    if (1) {
+    if (0) {
         constexpr size_t K = 15;
         constexpr size_t R = 6;
         constexpr size_t total_input_bytes = 256;
@@ -414,8 +476,9 @@ int main(int argc, char** argv) {
         constexpr size_t total_input_bytes = 8;
         const int poly[2] = { 062650457, 062650455 };
         auto test = init_test<K,R>(poly, total_input_bytes, args.sampling_time, args.minimum_samples);
-        test_ka9q<K,R,ka9q_viterbi224>(test);
-        test_ours<K,R>(test);
+        // test_ka9q<K,R,ka9q_viterbi224>(test);
+        // test_ours<K,R>(test);
+        test_ours_tableless<K,R>(test);
     }
     fprintf(fp_out, "\n]\n");
     return 0;
