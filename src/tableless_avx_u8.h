@@ -84,8 +84,9 @@ private:
         for (size_t i = 0; i < Base::R; i++) {
             v_poly[i] = _mm256_set1_epi32(int(config.poly[i]));
         }
-        alignas(32) const int32_t state_offset[8] = { 0, 4, 8, 12, 16, 20, 24, 28 };
-        const __m256i v_state_offset = _mm256_load_si256(reinterpret_cast<const __m256i*>(state_offset));
+        alignas(32) static const int32_t state_offset[8] = { 0, 4, 8, 12, 16, 20, 24, 28 };
+        static const __m256i v_state_offset = _mm256_load_si256(reinterpret_cast<const __m256i*>(state_offset));
+        static const __m256i v_state_offset_shifted =  _mm256_slli_epi32(v_state_offset, 1);
 
         // Vectorise constants
         for (size_t i = 0; i < Base::R; i++) {
@@ -107,16 +108,22 @@ private:
             __m256i total_error = _mm256_set1_epi8(0);
             for (size_t i = 0u; i < Base::R; i++) {
                 const __m256i G = v_poly[i];
-                __m256i p4 = _mm256_setzero_si256();
+                __m256i v_p0[4];
                 for (size_t j = 0; j < 4; j++) {
-                    const __m256i v_state = _mm256_add_epi32(v_state_offset, _mm256_set1_epi32(curr_state_offset + j));
-                    const __m256i v_reg = _mm256_and_si256(_mm256_slli_epi32(v_state, 1), G);
+                    const uint32_t state_offset_shifted = uint32_t((curr_state_offset + j) << 1);
+                    const __m256i v_state = _mm256_add_epi32(v_state_offset_shifted, _mm256_set1_epi32(state_offset_shifted));
+                    const __m256i v_reg = _mm256_and_si256(v_state, G);
                     const __m256i p0 = _mm256_xor_si256(v_reg, _mm256_srli_epi32(v_reg, 16));
-                    const __m256i p1 = _mm256_xor_si256(p0, _mm256_srli_epi32(p0, 8));
-                    const __m256i p2 = _mm256_and_si256(p1, _mm256_set1_epi32(0xFF));
-                    const __m256i p3 = _mm256_slli_epi32(p2, j*8);
-                    p4 = _mm256_or_si256(p4, p3);
+                    v_p0[j] = p0;
                 }
+                __m256i v_p1[2] = {
+                    _mm256_blend_epi16(v_p0[0], _mm256_slli_epi32(v_p0[2], 16), 0b1010'1010),
+                    _mm256_blend_epi16(v_p0[1], _mm256_slli_epi32(v_p0[3], 16), 0b1010'1010),
+                };
+                const __m256i mask = _mm256_set1_epi16(0x00FF);
+                v_p1[0] = _mm256_and_si256(_mm256_xor_si256(v_p1[0], _mm256_srli_epi16(v_p1[0], 8)), mask);
+                v_p1[1] = _mm256_and_si256(_mm256_xor_si256(v_p1[1], _mm256_srli_epi16(v_p1[1], 8)), mask);
+                const __m256i p4 = _mm256_or_si256(v_p1[0], _mm256_slli_epi16(v_p1[1], 8));
                 const __m256i p5 = _mm256_xor_si256(p4, _mm256_slli_epi64(p4, 4));
                 const __m256i p6 = _mm256_xor_si256(p5, _mm256_slli_epi64(p5, 2));
                 const __m256i p7 = _mm256_xor_si256(p6, _mm256_slli_epi64(p6, 1));
