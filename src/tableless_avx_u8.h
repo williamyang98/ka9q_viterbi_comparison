@@ -87,6 +87,11 @@ private:
         alignas(32) static const int32_t state_offset[8] = { 0, 4, 8, 12, 16, 20, 24, 28 };
         static const __m256i v_state_offset = _mm256_load_si256(reinterpret_cast<const __m256i*>(state_offset));
         static const __m256i v_state_offset_shifted =  _mm256_slli_epi32(v_state_offset, 1);
+        alignas(32) static const uint8_t blend_mask[32] = {
+            0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF,
+            0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF,
+        };
+        static const __m256i v_blend_mask = _mm256_load_si256(reinterpret_cast<const __m256i*>(blend_mask));
 
         // Vectorise constants
         for (size_t i = 0; i < Base::R; i++) {
@@ -120,10 +125,9 @@ private:
                     _mm256_blend_epi16(v_p0[0], _mm256_slli_epi32(v_p0[2], 16), 0b1010'1010),
                     _mm256_blend_epi16(v_p0[1], _mm256_slli_epi32(v_p0[3], 16), 0b1010'1010),
                 };
-                const __m256i mask = _mm256_set1_epi16(0x00FF);
-                v_p1[0] = _mm256_and_si256(_mm256_xor_si256(v_p1[0], _mm256_srli_epi16(v_p1[0], 8)), mask);
-                v_p1[1] = _mm256_and_si256(_mm256_xor_si256(v_p1[1], _mm256_srli_epi16(v_p1[1], 8)), mask);
-                const __m256i p4 = _mm256_or_si256(v_p1[0], _mm256_slli_epi16(v_p1[1], 8));
+                v_p1[0] = _mm256_xor_si256(v_p1[0], _mm256_srli_epi16(v_p1[0], 8));
+                v_p1[1] = _mm256_xor_si256(v_p1[1], _mm256_srli_epi16(v_p1[1], 8));
+                const __m256i p4 = _mm256_blendv_epi8(v_p1[0], _mm256_slli_epi16(v_p1[1], 8), v_blend_mask);
                 const __m256i p5 = _mm256_xor_si256(p4, _mm256_slli_epi64(p4, 4));
                 const __m256i p6 = _mm256_xor_si256(p5, _mm256_slli_epi64(p5, 2));
                 const __m256i p7 = _mm256_xor_si256(p6, _mm256_slli_epi64(p6, 1));
