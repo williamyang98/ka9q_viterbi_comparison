@@ -23,6 +23,7 @@ def main():
     kr_list = list(unique(((s.K,s.R) for s in samples)))
     norm_name = "sse_u8"
     sorted_names = ["ka9q", "spiral", "sse_u16", "avx_u16", "sse_u8", "avx_u8"]
+    sorted_names.extend((name for name in names if name not in set(sorted_names)))
 
     import matplotlib.pyplot as plt
     import matplotlib.ticker as mpl_ticker
