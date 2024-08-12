@@ -76,7 +76,6 @@ private:
         __m256i* v_new_metrics = reinterpret_cast<__m256i*>(new_metric);
         uint64_t* v_decision = reinterpret_cast<uint64_t*>(decision);
 
-        assert(uintptr_t(v_branch_table) % SIMD_ALIGN == 0);
         assert(uintptr_t(v_old_metrics)  % SIMD_ALIGN == 0);
         assert(uintptr_t(v_new_metrics)  % SIMD_ALIGN == 0);
 
@@ -118,9 +117,9 @@ private:
                     const __m256i p3 = _mm256_slli_epi32(p2, j*8);
                     p4 = _mm256_or_si256(p4, p3);
                 }
-                const __m256i p5 = _mm256_xor_si256(p4, _mm256_slli_si256(p4, 4));
-                const __m256i p6 = _mm256_xor_si256(p5, _mm256_slli_si256(p5, 2));
-                const __m256i p7 = _mm256_xor_si256(p6, _mm256_slli_si256(p6, 1));
+                const __m256i p5 = _mm256_xor_si256(p4, _mm256_slli_epi64(p4, 4));
+                const __m256i p6 = _mm256_xor_si256(p5, _mm256_slli_epi64(p5, 2));
+                const __m256i p7 = _mm256_xor_si256(p6, _mm256_slli_epi64(p6, 1));
                 const __m256i branch_value = _mm256_blendv_epi8(v_decision_low, v_decision_high, p7);
                 __m256i error = _mm256_subs_epi8(branch_value, v_symbols[i]);
                 error = _mm256_abs_epi8(error);

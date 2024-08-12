@@ -476,7 +476,7 @@ int main(int argc, char** argv) {
         constexpr size_t total_input_bytes = 8;
         const int poly[2] = { 062650457, 062650455 };
         auto test = init_test<K,R>(poly, total_input_bytes, args.sampling_time, args.minimum_samples);
-        // test_ka9q<K,R,ka9q_viterbi224>(test);
+        test_ka9q<K,R,ka9q_viterbi224>(test);
         // test_ours<K,R>(test);
         test_ours_tableless<K,R>(test);
     }
