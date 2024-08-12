@@ -113,21 +113,47 @@ private:
             __m256i total_error = _mm256_set1_epi8(0);
             for (size_t i = 0u; i < Base::R; i++) {
                 const __m256i G = v_poly[i];
-                __m256i v_p0[4];
-                for (size_t j = 0; j < 4; j++) {
+                __m256i v_p0_0;
+                __m256i v_p0_1;
+                __m256i v_p0_2;
+                __m256i v_p0_3;
+                {
+                    constexpr size_t j = 0;
                     const uint32_t state_offset_shifted = uint32_t((curr_state_offset + j) << 1);
                     const __m256i v_state = _mm256_add_epi32(v_state_offset_shifted, _mm256_set1_epi32(state_offset_shifted));
                     const __m256i v_reg = _mm256_and_si256(v_state, G);
                     const __m256i p0 = _mm256_xor_si256(v_reg, _mm256_srli_epi32(v_reg, 16));
-                    v_p0[j] = p0;
+                    v_p0_0 = p0;
                 }
-                __m256i v_p1[2] = {
-                    _mm256_blend_epi16(v_p0[0], _mm256_slli_epi32(v_p0[2], 16), 0b1010'1010),
-                    _mm256_blend_epi16(v_p0[1], _mm256_slli_epi32(v_p0[3], 16), 0b1010'1010),
-                };
-                v_p1[0] = _mm256_xor_si256(v_p1[0], _mm256_srli_epi16(v_p1[0], 8));
-                v_p1[1] = _mm256_xor_si256(v_p1[1], _mm256_srli_epi16(v_p1[1], 8));
-                const __m256i p4 = _mm256_blendv_epi8(v_p1[0], _mm256_slli_epi16(v_p1[1], 8), v_blend_mask);
+                {
+                    constexpr size_t j = 1;
+                    const uint32_t state_offset_shifted = uint32_t((curr_state_offset + j) << 1);
+                    const __m256i v_state = _mm256_add_epi32(v_state_offset_shifted, _mm256_set1_epi32(state_offset_shifted));
+                    const __m256i v_reg = _mm256_and_si256(v_state, G);
+                    const __m256i p0 = _mm256_xor_si256(v_reg, _mm256_srli_epi32(v_reg, 16));
+                    v_p0_1 = p0;
+                }
+                {
+                    constexpr size_t j = 2;
+                    const uint32_t state_offset_shifted = uint32_t((curr_state_offset + j) << 1);
+                    const __m256i v_state = _mm256_add_epi32(v_state_offset_shifted, _mm256_set1_epi32(state_offset_shifted));
+                    const __m256i v_reg = _mm256_and_si256(v_state, G);
+                    const __m256i p0 = _mm256_xor_si256(v_reg, _mm256_srli_epi32(v_reg, 16));
+                    v_p0_2 = p0;
+                }
+                {
+                    constexpr size_t j = 3;
+                    const uint32_t state_offset_shifted = uint32_t((curr_state_offset + j) << 1);
+                    const __m256i v_state = _mm256_add_epi32(v_state_offset_shifted, _mm256_set1_epi32(state_offset_shifted));
+                    const __m256i v_reg = _mm256_and_si256(v_state, G);
+                    const __m256i p0 = _mm256_xor_si256(v_reg, _mm256_srli_epi32(v_reg, 16));
+                    v_p0_3 = p0;
+                }
+                __m256i v_p1_0 = _mm256_blend_epi16(v_p0_0, _mm256_slli_epi32(v_p0_2, 16), 0b1010'1010);
+                __m256i v_p1_1 = _mm256_blend_epi16(v_p0_1, _mm256_slli_epi32(v_p0_3, 16), 0b1010'1010);
+                v_p1_0 = _mm256_xor_si256(v_p1_0, _mm256_srli_epi16(v_p1_0, 8));
+                v_p1_1 = _mm256_xor_si256(v_p1_1, _mm256_srli_epi16(v_p1_1, 8));
+                const __m256i p4 = _mm256_blendv_epi8(v_p1_0, _mm256_slli_epi16(v_p1_1, 8), v_blend_mask);
                 const __m256i p5 = _mm256_xor_si256(p4, _mm256_slli_epi64(p4, 4));
                 const __m256i p6 = _mm256_xor_si256(p5, _mm256_slli_epi64(p5, 2));
                 const __m256i p7 = _mm256_xor_si256(p6, _mm256_slli_epi64(p6, 1));
