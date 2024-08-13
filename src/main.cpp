@@ -358,7 +358,7 @@ TestResult test_ours_tableless_single(const char* name, Test& test, Decoder_Conf
 
 template <size_t K, size_t R>
 void test_ours_tableless(Test& test) {
-    {
+    if (1) {
         fprintf(fp_log, "- sse_u16_tableless\r");
         fflush(fp_log);
         using soft_t = int16_t;
@@ -368,7 +368,7 @@ void test_ours_tableless(Test& test) {
         const auto result = test_ours_tableless_single<K,R,soft_t,error_t,decoder_t>("sse_u16_tableless", test, config);
         fprintf(fp_log, "o sse_u16_tableless (%.3f)\n", result.bit_error_rate);
     }
-    {
+    if (1) {
         fprintf(fp_log, "- avx_u16_tableless\r");
         fflush(fp_log);
         using soft_t = int16_t;
@@ -378,7 +378,7 @@ void test_ours_tableless(Test& test) {
         const auto result = test_ours_tableless_single<K,R,soft_t,error_t,decoder_t>("avx_u16_tableless", test, config);
         fprintf(fp_log, "o avx_u16_tableless (%.3f)\n", result.bit_error_rate);
     }
-    {
+    if (1) {
         fprintf(fp_log, "- sse_u8_tableless\r");
         fflush(fp_log);
         using soft_t = int8_t;
@@ -388,7 +388,7 @@ void test_ours_tableless(Test& test) {
         const auto result = test_ours_tableless_single<K,R,soft_t,error_t,decoder_t>("sse_u8_tableless", test, config);
         fprintf(fp_log, "o sse_u8_tableless (%.3f)\n", result.bit_error_rate);
     }
-    {
+    if (1) {
         fprintf(fp_log, "- avx_u8_tableless\r");
         fflush(fp_log);
         using soft_t = int8_t;
@@ -463,7 +463,7 @@ int main(int argc, char** argv) {
     samples.clear();
 
     fprintf(fp_out, "[\n");
-    if (0) {
+    if (1) {
         constexpr size_t K = 7;
         constexpr size_t R = 2;
         constexpr size_t total_input_bytes = 1024;
@@ -472,8 +472,9 @@ int main(int argc, char** argv) {
         test_ka9q<K,R,ka9q_viterbi27>(test);
         test_spiral<K,R,spiral27_i>(test);
         test_ours<K,R>(test);
+        test_ours_tableless<K,R>(test);
     }
-    if (0) {
+    if (1) {
         constexpr size_t K = 7;
         constexpr size_t R = 4;
         constexpr size_t total_input_bytes = 1024;
@@ -481,8 +482,9 @@ int main(int argc, char** argv) {
         auto test = init_test<K,R>(poly, total_input_bytes, args.sampling_time, args.minimum_samples);
         test_spiral<K,R,spiral47_i>(test);
         test_ours<K,R>(test);
+        test_ours_tableless<K,R>(test);
     }
-    if (0) {
+    if (1) {
         constexpr size_t K = 9;
         constexpr size_t R = 2;
         constexpr size_t total_input_bytes = 512;
@@ -491,8 +493,9 @@ int main(int argc, char** argv) {
         test_ka9q<K,R,ka9q_viterbi29>(test);
         test_spiral<K,R,spiral29_i>(test);
         test_ours<K,R>(test);
+        test_ours_tableless<K,R>(test);
     }
-    if (0) {
+    if (1) {
         constexpr size_t K = 9;
         constexpr size_t R = 4;
         constexpr size_t total_input_bytes = 512;
@@ -500,8 +503,9 @@ int main(int argc, char** argv) {
         auto test = init_test<K,R>(poly, total_input_bytes, args.sampling_time, args.minimum_samples);
         test_spiral<K,R,spiral49_i>(test);
         test_ours<K,R>(test);
+        test_ours_tableless<K,R>(test);
     }
-    if (0) {
+    if (1) {
         constexpr size_t K = 15;
         constexpr size_t R = 6;
         constexpr size_t total_input_bytes = 256;
@@ -510,6 +514,7 @@ int main(int argc, char** argv) {
         test_ka9q<K,R,ka9q_viterbi615>(test);
         test_spiral<K,R,spiral615_i>(test);
         test_ours<K,R>(test);
+        test_ours_tableless<K,R>(test);
     }
     if (1) {
         constexpr size_t K = 24;
