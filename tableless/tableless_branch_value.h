@@ -18,30 +18,30 @@ static inline __m256i mm256_get_branch_value_s8(size_t curr_state_offset, poly_t
     // setup initial values
     if constexpr(sizeof(poly_t) == 4) {
         // 32bit
-        alignas(32) const int32_t state_offset[8] = { 0, 8, 16, 24, 32, 40, 48, 56 };
+        alignas(32) const int32_t state_offset[8] = { 0, 4, 8, 12, 16, 20, 24, 28 };
         const __m256i v_state_offset = _mm256_load_si256(reinterpret_cast<const __m256i*>(state_offset));
-        const __m256i v_G = _mm256_set1_epi32(int(G));
+        const __m256i v_G = _mm256_set1_epi32(int(G) >> 1);
         for (size_t i = 0; i < 4; i++) {
-            const __m256i v_state = _mm256_add_epi32(v_state_offset, _mm256_set1_epi32((curr_state_offset + i) << 1));
+            const __m256i v_state = _mm256_add_epi32(v_state_offset, _mm256_set1_epi32(curr_state_offset + i));
             const __m256i v_reg = _mm256_and_si256(v_state, v_G);
             v_p32[i] = v_reg;
         }
     } else if constexpr(sizeof(poly_t) == 2) {
         // 16bit
-        alignas(32) const int16_t state_offset[16] = { 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60 };
+        alignas(32) const int16_t state_offset[16] = { 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30 };
         const __m256i v_state_offset = _mm256_load_si256(reinterpret_cast<const __m256i*>(state_offset));
-        const __m256i v_G = _mm256_set1_epi16(short(G));
+        const __m256i v_G = _mm256_set1_epi16(short(G) >> 1);
         for (size_t i = 0; i < 2; i++) {
-            const __m256i v_state = _mm256_add_epi16(v_state_offset, _mm256_set1_epi16((curr_state_offset + i) << 1));
+            const __m256i v_state = _mm256_add_epi16(v_state_offset, _mm256_set1_epi16(curr_state_offset + i));
             const __m256i v_reg = _mm256_and_si256(v_state, v_G);
             v_p16[i] = v_reg;
         }
     } else if constexpr(sizeof(poly_t) == 1) {
         // 8bit
-        alignas(32) const int8_t state_offset[32] = { 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62 };
+        alignas(32) const int8_t state_offset[32] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 };
         const __m256i v_state_offset = _mm256_load_si256(reinterpret_cast<const __m256i*>(state_offset));
-        const __m256i v_state = _mm256_add_epi8(v_state_offset, _mm256_set1_epi8(curr_state_offset << 1));
-        const __m256i v_G = _mm256_set1_epi8(char(G));
+        const __m256i v_state = _mm256_add_epi8(v_state_offset, _mm256_set1_epi8(curr_state_offset));
+        const __m256i v_G = _mm256_set1_epi8(char(G) >> 1);
         const __m256i v_reg = _mm256_and_si256(v_state, v_G);
         v_p8 = v_reg;
     }
@@ -92,30 +92,30 @@ static inline __m128i mm128_get_branch_value_s8(size_t curr_state_offset, poly_t
     // setup initial values
     if constexpr(sizeof(poly_t) == 4) {
         // 32bit
-        alignas(16) const int32_t state_offset[4] = { 0, 8, 16, 24 };
+        alignas(16) const int32_t state_offset[4] = { 0, 4, 8, 12 };
         const __m128i v_state_offset = _mm_load_si128(reinterpret_cast<const __m128i*>(state_offset));
-        const __m128i v_G = _mm_set1_epi32(int(G));
+        const __m128i v_G = _mm_set1_epi32(int(G) >> 1);
         for (size_t i = 0; i < 4; i++) {
-            const __m128i v_state = _mm_add_epi32(v_state_offset, _mm_set1_epi32((curr_state_offset + i) << 1));
+            const __m128i v_state = _mm_add_epi32(v_state_offset, _mm_set1_epi32(curr_state_offset + i));
             const __m128i v_reg = _mm_and_si128(v_state, v_G);
             v_p32[i] = v_reg;
         }
     } else if constexpr(sizeof(poly_t) == 2) {
         // 16bit
-        alignas(16) const int16_t state_offset[8] = { 0, 4, 8, 12, 16, 20, 24, 28 };
+        alignas(16) const int16_t state_offset[8] = { 0, 2, 4, 6, 8, 10, 12, 14 };
         const __m128i v_state_offset = _mm_load_si128(reinterpret_cast<const __m128i*>(state_offset));
-        const __m128i v_G = _mm_set1_epi16(short(G));
+        const __m128i v_G = _mm_set1_epi16(short(G) >> 1);
         for (size_t i = 0; i < 2; i++) {
-            const __m128i v_state = _mm_add_epi16(v_state_offset, _mm_set1_epi16((curr_state_offset + i) << 1));
+            const __m128i v_state = _mm_add_epi16(v_state_offset, _mm_set1_epi16(curr_state_offset + i));
             const __m128i v_reg = _mm_and_si128(v_state, v_G);
             v_p16[i] = v_reg;
         }
     } else if constexpr(sizeof(poly_t) == 1) {
         // 8bit
-        alignas(16) const int8_t state_offset[16] = { 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30 };
+        alignas(16) const int8_t state_offset[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
         const __m128i v_state_offset = _mm_load_si128(reinterpret_cast<const __m128i*>(state_offset));
-        const __m128i v_state = _mm_add_epi8(v_state_offset, _mm_set1_epi8(curr_state_offset << 1));
-        const __m128i v_G = _mm_set1_epi8(char(G));
+        const __m128i v_state = _mm_add_epi8(v_state_offset, _mm_set1_epi8(curr_state_offset));
+        const __m128i v_G = _mm_set1_epi8(char(G) >> 1);
         const __m128i v_reg = _mm_and_si128(v_state, v_G);
         v_p8 = v_reg;
     }
@@ -165,20 +165,20 @@ static inline __m256i mm256_get_branch_value_s16(size_t curr_state_offset, poly_
     // setup initial values
     if constexpr(sizeof(poly_t) == 4) {
         // 32bit
-        alignas(32) const int32_t state_offset[8] = { 0, 4, 8, 12, 16, 20, 24, 28 };
+        alignas(32) const int32_t state_offset[8] = { 0, 2, 4, 6, 8, 10, 12, 14 };
         const __m256i v_state_offset = _mm256_load_si256(reinterpret_cast<const __m256i*>(state_offset));
-        const __m256i v_G = _mm256_set1_epi32(int(G));
+        const __m256i v_G = _mm256_set1_epi32(int(G) >> 1);
         for (size_t i = 0; i < 4; i++) {
-            const __m256i v_state = _mm256_add_epi32(v_state_offset, _mm256_set1_epi32((curr_state_offset + i) << 1));
+            const __m256i v_state = _mm256_add_epi32(v_state_offset, _mm256_set1_epi32(curr_state_offset + i));
             const __m256i v_reg = _mm256_and_si256(v_state, v_G);
             v_p32[i] = v_reg;
         }
     } else if constexpr(sizeof(poly_t) == 2 || sizeof(poly_t) == 1) {
         // 16bit and 8bit
-        alignas(32) const int16_t state_offset[16] = { 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30 };
+        alignas(32) const int16_t state_offset[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
         const __m256i v_state_offset = _mm256_load_si256(reinterpret_cast<const __m256i*>(state_offset));
-        const __m256i v_G = _mm256_set1_epi16(short(G));
-        const __m256i v_state = _mm256_add_epi16(v_state_offset, _mm256_set1_epi16(curr_state_offset << 1));
+        const __m256i v_G = _mm256_set1_epi16(short(G) >> 1);
+        const __m256i v_state = _mm256_add_epi16(v_state_offset, _mm256_set1_epi16(curr_state_offset));
         const __m256i v_reg = _mm256_and_si256(v_state, v_G);
         v_p16 = v_reg;
     }
@@ -216,20 +216,20 @@ static inline __m128i mm128_get_branch_value_s16(size_t curr_state_offset, poly_
     // setup initial values
     if constexpr(sizeof(poly_t) == 4) {
         // 32bit
-        alignas(32) const int32_t state_offset[4] = { 0, 4, 8, 12 };
+        alignas(32) const int32_t state_offset[4] = { 0, 2, 4, 6 };
         const __m128i v_state_offset = _mm_load_si128(reinterpret_cast<const __m128i*>(state_offset));
-        const __m128i v_G = _mm_set1_epi32(int(G));
+        const __m128i v_G = _mm_set1_epi32(int(G) >> 1);
         for (size_t i = 0; i < 4; i++) {
-            const __m128i v_state = _mm_add_epi32(v_state_offset, _mm_set1_epi32((curr_state_offset + i) << 1));
+            const __m128i v_state = _mm_add_epi32(v_state_offset, _mm_set1_epi32(curr_state_offset + i));
             const __m128i v_reg = _mm_and_si128(v_state, v_G);
             v_p32[i] = v_reg;
         }
     } else if constexpr(sizeof(poly_t) == 2 || sizeof(poly_t) == 1) {
         // 16bit and 8bit
-        alignas(32) const int16_t state_offset[8] = { 0, 2, 4, 6, 8, 10, 12, 14 };
+        alignas(32) const int16_t state_offset[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
         const __m128i v_state_offset = _mm_load_si128(reinterpret_cast<const __m128i*>(state_offset));
-        const __m128i v_G = _mm_set1_epi16(short(G));
-        const __m128i v_state = _mm_add_epi16(v_state_offset, _mm_set1_epi16(curr_state_offset << 1));
+        const __m128i v_G = _mm_set1_epi16(short(G) >> 1);
+        const __m128i v_state = _mm_add_epi16(v_state_offset, _mm_set1_epi16(curr_state_offset));
         const __m128i v_reg = _mm_and_si128(v_state, v_G);
         v_p16 = v_reg;
     }
