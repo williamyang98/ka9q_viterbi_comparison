@@ -9,7 +9,6 @@
 #include <optional>
 #include <vector>
 #include "./argparse.hpp"
-#include "./tableless_avx_u8.h"
 #include "./ka9q_interface.h"
 #include "./span.h"
 #include "./spiral_interface.h"
@@ -24,6 +23,10 @@
 #include "viterbi/x86/viterbi_decoder_avx_u8.h"
 #include "viterbi/x86/viterbi_decoder_sse_u16.h"
 #include "viterbi/x86/viterbi_decoder_sse_u8.h"
+#include "tableless_sse_u16.h"
+#include "tableless_avx_u16.h"
+#include "tableless_sse_u8.h"
+#include "tableless_avx_u8.h"
 
 static FILE* const fp_log = stderr;
 static FILE* fp_out = stdout;
@@ -299,25 +302,23 @@ void test_spiral(Test& test) {
 }
 
 // test ours tableless
-template <size_t K, size_t R>
-TestResult test_ours_tableless(Test& test) {
-    using soft_t = int8_t;
-    using error_t = uint8_t;
+template <size_t K, size_t R, typename soft_t, typename error_t, class decoder_t>
+TestResult test_ours_tableless_single(const char* name, Test& test, Decoder_Config<soft_t, error_t> config) {
     const size_t total_decode_bits = test.total_input_bytes*8;
-    const int* poly = test.poly;
     const auto& x_in = test.x_in;
     auto& x_out = test.x_out;
     using reg_t = uint32_t;
-    using decoder_t = ViterbiDecoder_Tableless_AVX_u8<K,R>;
-    using decoder_config_t = ViterbiDecoder_Tableless_Config_AVX_u8;
-    auto config = get_soft8_decoding_config(R);
+    using poly_t = typename decoder_t::poly_t;
+    using decoder_config_t = typename decoder_t::Config;
+    std::vector<poly_t> poly(R);
+    for (size_t i = 0; i < R; i++) poly[i] = test.poly[i];
     decoder_config_t decoder_config;
     {
-        decoder_config.poly = reinterpret_cast<const uint32_t*>(test.poly);
+        decoder_config.poly = poly.data();
         decoder_config.soft_decision_low = config.soft_decision_low;
         decoder_config.soft_decision_high = config.soft_decision_high;
     }
-    auto encoder = ConvolutionalEncoder_ShiftRegister<reg_t>(K, R, poly);
+    auto encoder = ConvolutionalEncoder_ShiftRegister<reg_t>(K, R, poly.data());
     auto y_out = std::vector<soft_t>(test.total_output_symbols);
     encode_data<soft_t>(
         &encoder,
@@ -326,8 +327,6 @@ TestResult test_ours_tableless(Test& test) {
     );
     auto core = std::make_unique<ViterbiDecoder_Core<K,R,error_t,soft_t>>(config.decoder_config);
     core->set_traceback_length(total_decode_bits);
-    fprintf(fp_log, "- avx_u8_tableless\r");
-    fflush(fp_log);
     Timer total_time;
     samples.clear();
     for (size_t i = 0; ; i++) {
@@ -354,9 +353,51 @@ TestResult test_ours_tableless(Test& test) {
         }
         samples.push_back(sample);
     }
-    auto result = print_test("avx_u8_tableless", test);
-    fprintf(fp_log, "o avx_u8_tableless (%.3f)\n", result.bit_error_rate);
-    return result;
+    return print_test(name, test);
+}
+
+template <size_t K, size_t R>
+void test_ours_tableless(Test& test) {
+    {
+        fprintf(fp_log, "- sse_u16_tableless\r");
+        fflush(fp_log);
+        using soft_t = int16_t;
+        using error_t = uint16_t;
+        using decoder_t = ViterbiDecoder_Tableless_SSE_u16<K,R>;
+        const auto config = get_soft16_decoding_config(R);
+        const auto result = test_ours_tableless_single<K,R,soft_t,error_t,decoder_t>("sse_u16_tableless", test, config);
+        fprintf(fp_log, "o sse_u16_tableless (%.3f)\n", result.bit_error_rate);
+    }
+    {
+        fprintf(fp_log, "- avx_u16_tableless\r");
+        fflush(fp_log);
+        using soft_t = int16_t;
+        using error_t = uint16_t;
+        using decoder_t = ViterbiDecoder_Tableless_AVX_u16<K,R>;
+        const auto config = get_soft16_decoding_config(R);
+        const auto result = test_ours_tableless_single<K,R,soft_t,error_t,decoder_t>("avx_u16_tableless", test, config);
+        fprintf(fp_log, "o avx_u16_tableless (%.3f)\n", result.bit_error_rate);
+    }
+    {
+        fprintf(fp_log, "- sse_u8_tableless\r");
+        fflush(fp_log);
+        using soft_t = int8_t;
+        using error_t = uint8_t;
+        using decoder_t = ViterbiDecoder_Tableless_SSE_u8<K,R>;
+        const auto config = get_soft8_decoding_config(R);
+        const auto result = test_ours_tableless_single<K,R,soft_t,error_t,decoder_t>("sse_u8_tableless", test, config);
+        fprintf(fp_log, "o sse_u8_tableless (%.3f)\n", result.bit_error_rate);
+    }
+    {
+        fprintf(fp_log, "- avx_u8_tableless\r");
+        fflush(fp_log);
+        using soft_t = int8_t;
+        using error_t = uint8_t;
+        using decoder_t = ViterbiDecoder_Tableless_AVX_u8<K,R>;
+        const auto config = get_soft8_decoding_config(R);
+        const auto result = test_ours_tableless_single<K,R,soft_t,error_t,decoder_t>("avx_u8_tableless", test, config);
+        fprintf(fp_log, "o avx_u8_tableless (%.3f)\n", result.bit_error_rate);
+    }
 }
 
 void init_parser(argparse::ArgumentParser& parser) {

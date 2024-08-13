@@ -12,12 +12,8 @@
 #include <stdalign.h>
 #include <assert.h>
 #include <immintrin.h>
-
-struct ViterbiDecoder_Tableless_Config_AVX_u8 {
-    int8_t soft_decision_high;
-    int8_t soft_decision_low;
-    const uint32_t* poly;
-};
+#include "./tableless_config.h"
+#include "./tableless_branch_value.h"
 
 /// @brief Vectorisation using AVX2.
 //         8bit integers for errors, soft-decision values.
@@ -25,9 +21,11 @@ struct ViterbiDecoder_Tableless_Config_AVX_u8 {
 template <size_t constraint_length, size_t code_rate>
 class ViterbiDecoder_Tableless_AVX_u8
 {
+public:
+    using poly_t = get_register_type<constraint_length>;
+    using Config = Tableless_Config<int8_t, poly_t>;
 private:
     using Base = ViterbiDecoder_Core<constraint_length,code_rate,uint8_t,int8_t>;
-    using Config = ViterbiDecoder_Tableless_Config_AVX_u8;
     using decision_bits_t = typename Base::Decisions::format_t;
 private:
     // Calculate the minimum constraint length for vectorisation
@@ -80,27 +78,12 @@ private:
         assert(uintptr_t(v_new_metrics)  % SIMD_ALIGN == 0);
 
         __m256i v_symbols[Base::R];
-        __m256i v_poly[Base::R];
-        for (size_t i = 0; i < Base::R; i++) {
-            v_poly[i] = _mm256_set1_epi32(int(config.poly[i]));
-        }
-        alignas(32) static const int32_t state_offset[8] = { 0, 4, 8, 12, 16, 20, 24, 28 };
-        static const __m256i v_state_offset = _mm256_load_si256(reinterpret_cast<const __m256i*>(state_offset));
-        static const __m256i v_state_offset_shifted =  _mm256_slli_epi32(v_state_offset, 1);
-        alignas(32) static const uint8_t blend_mask[32] = {
-            0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF,
-            0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF,
-        };
-        static const __m256i v_blend_mask = _mm256_load_si256(reinterpret_cast<const __m256i*>(blend_mask));
 
         // Vectorise constants
         for (size_t i = 0; i < Base::R; i++) {
             v_symbols[i] = _mm256_set1_epi8(symbols[i]);
         }
         const __m256i max_error = _mm256_set1_epi8(base.m_config.soft_decision_max_error);
-        const __m256i v_decision_high = _mm256_set1_epi8(config.soft_decision_high);
-        const __m256i v_decision_low = _mm256_set1_epi8(config.soft_decision_low);
-
         // We are using the butterfly optimisation trick so we only need to compute half the states
         constexpr size_t TOTAL_STATE_BITS = constraint_length-1;
         constexpr size_t NUMSTATES = (size_t(1) << TOTAL_STATE_BITS)/2;
@@ -112,52 +95,7 @@ private:
             // Total errors across R symbols
             __m256i total_error = _mm256_set1_epi8(0);
             for (size_t i = 0u; i < Base::R; i++) {
-                const __m256i G = v_poly[i];
-                __m256i v_p0_0;
-                __m256i v_p0_1;
-                __m256i v_p0_2;
-                __m256i v_p0_3;
-                {
-                    constexpr size_t j = 0;
-                    const uint32_t state_offset_shifted = uint32_t((curr_state_offset + j) << 1);
-                    const __m256i v_state = _mm256_add_epi32(v_state_offset_shifted, _mm256_set1_epi32(state_offset_shifted));
-                    const __m256i v_reg = _mm256_and_si256(v_state, G);
-                    const __m256i p0 = _mm256_xor_si256(v_reg, _mm256_srli_epi32(v_reg, 16));
-                    v_p0_0 = p0;
-                }
-                {
-                    constexpr size_t j = 1;
-                    const uint32_t state_offset_shifted = uint32_t((curr_state_offset + j) << 1);
-                    const __m256i v_state = _mm256_add_epi32(v_state_offset_shifted, _mm256_set1_epi32(state_offset_shifted));
-                    const __m256i v_reg = _mm256_and_si256(v_state, G);
-                    const __m256i p0 = _mm256_xor_si256(v_reg, _mm256_srli_epi32(v_reg, 16));
-                    v_p0_1 = p0;
-                }
-                {
-                    constexpr size_t j = 2;
-                    const uint32_t state_offset_shifted = uint32_t((curr_state_offset + j) << 1);
-                    const __m256i v_state = _mm256_add_epi32(v_state_offset_shifted, _mm256_set1_epi32(state_offset_shifted));
-                    const __m256i v_reg = _mm256_and_si256(v_state, G);
-                    const __m256i p0 = _mm256_xor_si256(v_reg, _mm256_srli_epi32(v_reg, 16));
-                    v_p0_2 = p0;
-                }
-                {
-                    constexpr size_t j = 3;
-                    const uint32_t state_offset_shifted = uint32_t((curr_state_offset + j) << 1);
-                    const __m256i v_state = _mm256_add_epi32(v_state_offset_shifted, _mm256_set1_epi32(state_offset_shifted));
-                    const __m256i v_reg = _mm256_and_si256(v_state, G);
-                    const __m256i p0 = _mm256_xor_si256(v_reg, _mm256_srli_epi32(v_reg, 16));
-                    v_p0_3 = p0;
-                }
-                __m256i v_p1_0 = _mm256_blend_epi16(v_p0_0, _mm256_slli_epi32(v_p0_2, 16), 0b1010'1010);
-                __m256i v_p1_1 = _mm256_blend_epi16(v_p0_1, _mm256_slli_epi32(v_p0_3, 16), 0b1010'1010);
-                v_p1_0 = _mm256_xor_si256(v_p1_0, _mm256_srli_epi16(v_p1_0, 8));
-                v_p1_1 = _mm256_xor_si256(v_p1_1, _mm256_srli_epi16(v_p1_1, 8));
-                const __m256i p4 = _mm256_blendv_epi8(v_p1_0, _mm256_slli_epi16(v_p1_1, 8), v_blend_mask);
-                const __m256i p5 = _mm256_xor_si256(p4, _mm256_slli_epi64(p4, 4));
-                const __m256i p6 = _mm256_xor_si256(p5, _mm256_slli_epi64(p5, 2));
-                const __m256i p7 = _mm256_xor_si256(p6, _mm256_slli_epi64(p6, 1));
-                const __m256i branch_value = _mm256_blendv_epi8(v_decision_low, v_decision_high, p7);
+                const __m256i branch_value = mm256_get_branch_value_s8(curr_state_offset, config.poly[i], config.soft_decision_low, config.soft_decision_high);
                 __m256i error = _mm256_subs_epi8(branch_value, v_symbols[i]);
                 error = _mm256_abs_epi8(error);
                 total_error = _mm256_adds_epu8(total_error, error);

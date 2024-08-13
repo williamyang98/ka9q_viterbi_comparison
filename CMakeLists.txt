@@ -25,8 +25,13 @@ add_library(spiral STATIC
 target_compile_features(spiral PRIVATE cxx_std_17)
 target_include_directories(spiral PRIVATE ${SPIRAL_DIR})
 
+add_library(tableless_viterbi INTERFACE)
+target_include_directories(tableless_viterbi INTERFACE ${CMAKE_SOURCE_DIR}/tableless)
+target_compile_features(tableless_viterbi INTERFACE cxx_std_17)
+target_link_libraries(tableless_viterbi INTERFACE viterbi)
+
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 add_executable(main ${SRC_DIR}/main.cpp)
 target_include_directories(main PRIVATE ${SRC_DIR} ${KA9Q_DIR} ${SPIRAL_DIR})
 target_compile_features(main PRIVATE cxx_std_17)
-target_link_libraries(main PRIVATE viterbi spiral ka9q_port)
+target_link_libraries(main PRIVATE viterbi spiral ka9q_port tableless_viterbi)
